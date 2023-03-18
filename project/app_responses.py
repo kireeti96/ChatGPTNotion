@@ -47,18 +47,25 @@ def get_chat_response(message,chat_gpt_token,http,bot,return_to_main,new_page,lo
     }
     body = json.dumps(payload)
     chat_results = http.request("POST",url=url,headers=headers,body=body)
+    logger.info("Sent a request to ChatGPT with the question")
     results = (json.loads(chat_results.data.decode('utf-8')))
     if 'error' in results:
+        logger.info("There was an error when chatGPT responded")
+        logger.info(f"{results}")
         bot.send_message(message.chat.id,"There was an issue with getting the response. Try Again.")
         previous_chats = previous_chats[:-1]
     else:
+        logger.info("Successfully received chatGPT response")
         actual_response = results['choices'][0]['message']['content'] #This can be used to save the response to notion
         bot.send_message(message.chat.id,f"Here is your response \n{actual_response}",parse_mode="Markdown")
         new_response = {"role":"assistant","content":f"{actual_response}"}
         previous_chats.append(new_response)
         
+        with open(chats_file,'w') as f:
+            logger.info("Response is received and chats session history is updated")
+            json.dump(previous_chats,f)
+        
         return_to_main(new_page,question,actual_response,message.chat.id)
     #Once the response is received we are updating the json file with the new Q&A set.
-    with open(chats_file,'w') as f:
-        json.dump(previous_chats,f)
+
     
