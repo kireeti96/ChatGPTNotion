@@ -2,11 +2,12 @@ import os
 import json
 
 def get_question(bot,logger,chat_id,chat_gpt_token,http,return_to_main,new_page):
+    logger.info("Inside app_responses.get_question method")
     get_question_message = bot.send_message(chat_id,"Enter Your question")
     logger.info('Successfully sent a message to the user to get the question')
-    bot.register_next_step_handler(get_question_message,get_chat_response,chat_gpt_token,http,bot,return_to_main,new_page)
+    bot.register_next_step_handler(get_question_message,get_chat_response,chat_gpt_token,http,bot,return_to_main,new_page,logger)
     
-def get_chat_response(message,chat_gpt_token,http,bot,return_to_main,new_page):
+def get_chat_response(message,chat_gpt_token,http,bot,return_to_main,new_page,logger):
     """
     This is the function that can be used to get response from ChatGPT based on the question asked by the user.
 
@@ -15,19 +16,22 @@ def get_chat_response(message,chat_gpt_token,http,bot,return_to_main,new_page):
     2. If yes, we will import those Q&A history and send it to the chat along with new question
     3. Obtain response from chat.
     """
-    
+    logger.info("Received question input from the user.")
     question = message.text
+    
     chats_file = os.getcwd() + '/project/chats/squestions.json'
     
     #Initializing a dictionary to get all previous chats from json file
     previous_chats = []
-    #This if condition is used to check if there is an existing file with previous questions and responses. 
+    #Validating if there is a session history. If yes, the history is sent along with new question so that the assistant will have previous context.
     if os.path.isfile(path=chats_file):
         with open(chats_file,'r') as f:
             previous_chats = json.load(f)
-    #The new question here represents the new question asked by the user.
+    
+    #The new question here represents the new question asked by the user. This is the dictionary format in which the user input need to be sent to API.
     new_question = {"role":"user","content":f"{question}"}
     
+    #Appending the new question dictionary with previous chats list.
     previous_chats.append(new_question)
     
     url = "https://api.openai.com/v1/chat/completions"
@@ -36,7 +40,7 @@ def get_chat_response(message,chat_gpt_token,http,bot,return_to_main,new_page):
         "Authorization" : f"Bearer {chat_gpt_token}",
         "Content-Type": "application/json"
     }
-
+    #The messages in the payload should be in a list format.
     payload = {
         "model" : "gpt-3.5-turbo",
         "messages" : previous_chats

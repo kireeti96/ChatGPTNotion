@@ -8,7 +8,8 @@ def send_welcome_message(bot,logger,chat_id):
     
 def send_all_commands(bot,logger,chat_id):
     commands = """\
-        1. To get response to your question and save the responses to Notion, click */squestion*
+        1. To get response to your question and save the responses to Notion, click */squestion*. \nBy using this command, you will be clearing the previous session history.
+        2. To continue your previous session i.e., continue your chat with ChatGPT, click */continue*. 
         """
     try:
         bot.send_message(chat_id,dedent(commands).strip('\n'),parse_mode="Markdown")
