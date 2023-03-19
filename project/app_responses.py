@@ -18,14 +18,13 @@ def get_chat_response(message,chat_gpt_token,http,bot,return_to_main,new_page,lo
     """
     logger.info("Received question input from the user.")
     question = message.text
-    
     chats_file = os.getcwd() + '/project/chats/squestions.json'
-    
     #Initializing a dictionary to get all previous chats from json file
     previous_chats = []
     #Validating if there is a session history. If yes, the history is sent along with new question so that the assistant will have previous context.
     if os.path.isfile(path=chats_file):
         with open(chats_file,'r') as f:
+            logger.info("Previous session history is found, reading the list.")
             previous_chats = json.load(f)
     
     #The new question here represents the new question asked by the user. This is the dictionary format in which the user input need to be sent to API.
@@ -33,6 +32,7 @@ def get_chat_response(message,chat_gpt_token,http,bot,return_to_main,new_page,lo
     
     #Appending the new question dictionary with previous chats list.
     previous_chats.append(new_question)
+    logger.info("New question dictionary is created and appended to the previous session history as applicable.")
     
     url = "https://api.openai.com/v1/chat/completions"
 
@@ -46,8 +46,9 @@ def get_chat_response(message,chat_gpt_token,http,bot,return_to_main,new_page,lo
         "messages" : previous_chats
     }
     body = json.dumps(payload)
+    logger.info("Sending a http request to ChatGPT API to get response.")
     chat_results = http.request("POST",url=url,headers=headers,body=body)
-    logger.info("Sent a request to ChatGPT with the question")
+    logger.info("Sent a request to ChatGPT with the question and results are obtained.")
     results = (json.loads(chat_results.data.decode('utf-8')))
     if 'error' in results:
         logger.info("There was an error when chatGPT responded")
@@ -56,6 +57,7 @@ def get_chat_response(message,chat_gpt_token,http,bot,return_to_main,new_page,lo
         previous_chats = previous_chats[:-1]
     else:
         logger.info("Successfully received chatGPT response")
+        logger.info(f"{results}")
         actual_response = results['choices'][0]['message']['content'] #This can be used to save the response to notion
         bot.send_message(message.chat.id,f"Here is your response \n{actual_response}",parse_mode="Markdown")
         new_response = {"role":"assistant","content":f"{actual_response}"}

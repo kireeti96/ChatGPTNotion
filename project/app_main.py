@@ -92,6 +92,7 @@ def all_commands(message):
     """
     This is the method that is used to send all Bot commands to the user
     """
+    logger.info("User requested for all commands. Calling the method to send the message.")
     app_start.send_all_commands(bot,logger,message.chat.id)
 
         
@@ -113,8 +114,9 @@ def get_question(message):
     if os.path.isfile(path=notion_page_id_file):
         os.remove(notion_page_id_file)
         logger.info("Successfully removed the file containing notion page id")
-        
+
     #Navigating to app_responses package to process the Q&A
+    logger.info("User sent a command to start a new session. Redirecting to get question method to send a message to ask the question")
     app_responses.get_question(bot,logger,message.chat.id,chat_gpt_token,http,save_to_notion,new_page=True)
     
 @bot.message_handler(commands=['continue'])
@@ -138,6 +140,7 @@ def save_to_notion(new_page,question,actual_response,chat_id):
     """
     If new_page flag is True, we need to create a new Notion Page in the database.
     """
+    logger.info("We are inside Save to Notion function in main app script.")
     if new_page:
         ask_notion_page_name = bot.send_message(chat_id,"Since this is your question of the session, please enter a page title.")
         bot.register_next_step_handler(ask_notion_page_name,app_notion_pages.create_page,notion_database,notion_token,question,actual_response,bot)
